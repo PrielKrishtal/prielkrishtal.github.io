@@ -31,6 +31,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161719" />
     <script is:inline>
       (() => {
+        document.documentElement.classList.add('js');
         let stored = null;
         try {
           stored = localStorage.getItem('theme');
@@ -52,6 +53,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       <slot />
     </main>
     <Footer />
+    <script>
+      import '../scripts/reveal.ts';
+    </script>
   </body>
 </html>
 

@@ -1,0 +1,171 @@
+---
+import { profile } from '../data/profile';
+---
+
+<section id="contact" class="contact" aria-labelledby="contact-title">
+  <div class="wrap contact-inner">
+  <h2 id="contact-title" class="section-title" data-reveal>Contact</h2>
+  <p class="lead" data-reveal style="--reveal-step: 1">Email is the quickest way to reach me. My CV is available on request.</p>
+  <ul class="channels" data-reveal style="--reveal-step: 2">
+    <li>
+      <span class="kind">Email</span>
+      <span class="value">
+        <a class="link" href={`mailto:${profile.email}`}>{profile.email}</a>
+        <button class="copy" type="button" data-copy={profile.email}>
+          <span class="copy-idle">Copy</span>
+          <span class="copy-done" aria-hidden="true">Copied</span>
+        </button>
+      </span>
+    </li>
+    <li>
+      <span class="kind">LinkedIn</span>
+      <span class="value"><a class="link" href={profile.linkedin.url}>{profile.linkedin.label}</a></span>
+    </li>
+    <li>
+      <span class="kind">GitHub</span>
+      <span class="value"><a class="link" href={profile.github.url}>{profile.github.label}</a></span>
+    </li>
+  </ul>
+  <p class="visually-hidden" aria-live="polite" data-copy-status></p>
+  </div>
+</section>
+
+<script>
+  const button = document.querySelector<HTMLButtonElement>('[data-copy]');
+  const status = document.querySelector<HTMLElement>('[data-copy-status]');
+  let timer = 0;
+
+  button?.addEventListener('click', async () => {
+    const value = button.dataset.copy ?? '';
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch {
+      return;
+    }
+    button.classList.add('is-done');
+    if (status) status.textContent = 'Email address copied.';
+    clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      button.classList.remove('is-done');
+      if (status) status.textContent = '';
+    }, 1600);
+  });
+</script>
+
+<style>
+  .contact {
+    margin-top: var(--section-gap);
+    background: var(--card);
+    color: var(--card-ink);
+  }
+
+  .contact-inner {
+    padding-block: clamp(56px, 8vw, 120px);
+  }
+
+  .contact :global(.link) {
+    text-decoration-color: var(--extract);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .contact :global(.link:hover) {
+      color: var(--extract);
+    }
+  }
+
+  .lead {
+    max-width: 40ch;
+    font-size: var(--text-lead);
+    line-height: var(--text-lead--line-height);
+  }
+
+  .channels {
+    display: grid;
+    gap: 6px;
+    margin: 32px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: grid;
+    gap: 2px 24px;
+    padding: 14px 0;
+  }
+
+  .kind {
+    color: var(--card-ink-2);
+    font-size: var(--text-small);
+    font-weight: 600;
+  }
+
+  .value {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    font-size: var(--text-lead);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .copy {
+    display: inline-grid;
+    min-height: 36px;
+    padding: 0 14px;
+    border: 1.5px solid var(--card-ink);
+    border-radius: 999px;
+    background: none;
+    font-size: var(--text-small);
+    font-weight: 600;
+    transition: transform 160ms var(--ease-out);
+  }
+
+  .copy:active {
+    transform: scale(0.97);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .copy {
+      transition:
+        transform 160ms var(--ease-out),
+        background-color 150ms ease,
+        color 150ms ease;
+    }
+
+    .copy:hover {
+      background: var(--card-ink);
+      color: var(--card);
+    }
+  }
+
+  .copy > span {
+    grid-area: 1 / 1;
+    align-self: center;
+    transition:
+      opacity 150ms ease,
+      transform 150ms var(--ease-out);
+  }
+
+  .copy-done {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  .copy.is-done .copy-idle {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  .copy.is-done .copy-done {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (min-width: 760px) {
+    li {
+      grid-template-columns: 7rem 1fr;
+      align-items: baseline;
+    }
+  }
+</style>

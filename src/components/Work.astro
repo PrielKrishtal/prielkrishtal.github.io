@@ -1,0 +1,186 @@
+---
+import ReceiptScrub from './ReceiptScrub.astro';
+import { clarityscan, filingbot, type Project } from '../data/profile';
+
+const entries: { project: Project; live: boolean }[] = [
+  { project: filingbot, live: true },
+  { project: clarityscan, live: false },
+];
+---
+
+<section id="work" class="section wrap" aria-labelledby="work-title">
+  <h2 id="work-title" class="section-title" data-reveal>Work</h2>
+
+  {
+    entries.map(({ project, live }, index) => (
+      <article class={`entry entry-${project.slug}`} aria-labelledby={`${project.slug}-title`}>
+        <div class="entry-text" data-reveal>
+          <div class="entry-head">
+            <h3 id={`${project.slug}-title`}>{project.name}</h3>
+            <span class={`status ${live ? 'is-live' : ''}`}>{project.status}</span>
+          </div>
+          <p class="problem">{project.problem}</p>
+          <dl class="numbers">
+            {project.numbers.map((number) => (
+              <div>
+                <dt class="num">{number.value}</dt>
+                <dd>{number.context}</dd>
+              </div>
+            ))}
+          </dl>
+          <p class="stack">{project.stack.join(', ')}</p>
+          <p class="entry-links">
+            <a class="link" href={`/work/${project.slug}`}>
+              Read the {project.name} case study
+            </a>
+            <a class="link" href={project.repo}>
+              Code on GitHub
+            </a>
+          </p>
+        </div>
+        <div class="entry-visual" data-reveal style="--reveal-step: 1">
+          {index === 0 ? (
+            <figure class="shot-slot">
+              <div class="shot-frame">
+                <p>Screenshot to come: a real FilingBot alert in Telegram.</p>
+              </div>
+            </figure>
+          ) : (
+            <ReceiptScrub />
+          )}
+        </div>
+      </article>
+    ))
+  }
+</section>
+
+<style>
+  .entry {
+    display: grid;
+    gap: 32px;
+  }
+
+  .entry + .entry {
+    margin-top: clamp(72px, 9vw, 128px);
+  }
+
+  .entry-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 16px;
+  }
+
+  h3 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: var(--text-title);
+    line-height: var(--text-title--line-height);
+    letter-spacing: -0.015em;
+  }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--ink-2);
+    font-size: var(--text-small);
+    font-weight: 600;
+  }
+
+  .status.is-live::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ok);
+  }
+
+  .problem {
+    margin-top: 14px;
+    max-width: 44ch;
+    font-size: var(--text-lead);
+    line-height: var(--text-lead--line-height);
+  }
+
+  .numbers {
+    display: grid;
+    gap: 18px;
+    margin: 28px 0 0;
+  }
+
+  .numbers div {
+    display: grid;
+    grid-template-columns: 5.5em minmax(0, 1fr);
+    align-items: baseline;
+    gap: 16px;
+  }
+
+  .numbers dt {
+    font-size: var(--text-lead);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .numbers dd {
+    margin: 0;
+    color: var(--ink-2);
+    max-width: 46ch;
+  }
+
+  .stack {
+    margin-top: 24px;
+    max-width: 60ch;
+  }
+
+  .entry-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    margin-top: 20px;
+    font-weight: 600;
+  }
+
+  .entry-links a {
+    padding-block: 8px;
+  }
+
+  .shot-slot {
+    margin: 0;
+    display: grid;
+    place-items: center;
+    padding: 32px 16px;
+    background: var(--sheet);
+    border-radius: 6px;
+  }
+
+  .shot-frame {
+    display: grid;
+    place-items: center;
+    width: min(240px, 100%);
+    aspect-ratio: 9 / 16;
+    padding: 20px;
+    background: var(--ground);
+    border-radius: 18px;
+    text-align: center;
+    color: var(--ink-2);
+    font-size: var(--text-small);
+    line-height: var(--text-small--line-height);
+  }
+
+  @media (min-width: 900px) {
+    .entry {
+      grid-template-columns: 7fr 5fr;
+      align-items: center;
+      gap: 64px;
+    }
+
+    .entry-clarityscan {
+      grid-template-columns: 5fr 7fr;
+    }
+
+    .entry-clarityscan .entry-visual {
+      order: -1;
+    }
+  }
+</style>

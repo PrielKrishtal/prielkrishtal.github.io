@@ -1,0 +1,42 @@
+---
+import { skills } from '../data/profile';
+---
+
+<section id="skills" class="section wrap" aria-labelledby="skills-title">
+  <h2 id="skills-title" class="section-title" data-reveal>Skills</h2>
+  <dl class="skills" data-reveal style="--reveal-step: 1">
+    {
+      skills.map(({ group, items }) => (
+        <div>
+          <dt>{group}</dt>
+          <dd>{items.join(', ')}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</section>
+
+<style>
+  .skills {
+    display: grid;
+    gap: 20px 48px;
+    margin: 0;
+    max-width: 1080px;
+  }
+
+  dt {
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 2px 0 0;
+    color: var(--ink);
+    max-width: 52ch;
+  }
+
+  @media (min-width: 760px) {
+    .skills {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

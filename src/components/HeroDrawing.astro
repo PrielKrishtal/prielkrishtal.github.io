@@ -1,0 +1,421 @@
+---
+interface Field {
+  label: string;
+  pattern: string;
+  at: number;
+}
+
+const fields: Field[] = [
+  { label: 'Insider', pattern: 'AAAAA AAAAAAA', at: 900 },
+  { label: 'Issuer', pattern: 'AAAAAAA (AAAA)', at: 980 },
+  { label: 'Transaction date', pattern: '##/##/####', at: 1350 },
+  { label: 'Transaction code', pattern: 'A', at: 1420 },
+  { label: 'Shares', pattern: '#,###', at: 1490 },
+  { label: 'Price', pattern: '$##.##', at: 1560 },
+];
+
+function cells(pattern: string) {
+  return [...pattern].map((char) =>
+    char === 'A' ? { kind: 'letter' } : char === '#' ? { kind: 'digit' } : { kind: 'text', char },
+  );
+}
+---
+
+<figure class="drawing is-pending" data-drawing aria-labelledby="stage-caption">
+  <div class="sheet" data-ui aria-hidden="true">
+    <div class="sheet-head">
+      <p class="form-name">Form 4</p>
+      <p class="agency">United States Securities and Exchange Commission</p>
+    </div>
+    <p class="form-title">Statement of changes in beneficial ownership</p>
+    <div class="boxes">
+      <div class="box">
+        <span class="box-label">1. Name and Address of Reporting Person</span>
+        <span class="redact w-70" style="--at: 900ms"></span>
+      </div>
+      <div class="box">
+        <span class="box-label">2. Issuer Name and Ticker or Trading Symbol</span>
+        <span class="redact w-80" style="--at: 980ms"></span>
+      </div>
+    </div>
+    <p class="table-title">Table I: Non-Derivative Securities Acquired, Disposed of, or Beneficially Owned</p>
+    <div class="table">
+      <span class="th">Transaction Date</span>
+      <span class="th">Code</span>
+      <span class="th">Amount</span>
+      <span class="th">Price</span>
+      <span class="td"><span class="redact w-90" style="--at: 1350ms"></span></span>
+      <span class="td"><span class="redact w-30" style="--at: 1420ms"></span></span>
+      <span class="td"><span class="redact w-70" style="--at: 1490ms"></span></span>
+      <span class="td"><span class="redact w-60" style="--at: 1560ms"></span></span>
+    </div>
+    <div class="scan-track"><span class="scan"></span></div>
+  </div>
+
+  <div class="connector" aria-hidden="true"></div>
+
+  <div class="card" aria-hidden="true">
+    <p class="card-title">Extracted fields</p>
+    <dl>
+      {
+        fields.map((field) => (
+          <div class="field" style={`--at: ${field.at}ms`}>
+            <dt>{field.label}</dt>
+            <dd>
+              {cells(field.pattern).map((cell) =>
+                cell.kind === 'text' ? <span class="lit">{cell.char}</span> : <span class={`cell ${cell.kind}`} />,
+              )}
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+    <p class="valid">Valid against the Pydantic schema</p>
+  </div>
+
+  <figcaption id="stage-caption">
+    <span>A drawing of how FilingBot reads a filing. Not a real filing; every value is redacted.</span>
+    <button class="replay" type="button" data-replay>Run it again</button>
+  </figcaption>
+</figure>
+
+<script>
+  const drawing = document.querySelector<HTMLElement>('[data-drawing]');
+  const replay = document.querySelector<HTMLButtonElement>('[data-replay]');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+  function run() {
+    if (!drawing) return;
+    drawing.classList.remove('is-running');
+    void drawing.offsetWidth;
+    drawing.classList.remove('is-pending');
+    if (reduceMotion.matches) return;
+    drawing.classList.add('is-running');
+  }
+
+  if (drawing) {
+    if (reduceMotion.matches) drawing.classList.remove('is-pending');
+    else requestAnimationFrame(() => setTimeout(run, 250));
+  }
+  replay?.addEventListener('click', run);
+</script>
+
+<style>
+  .drawing {
+    position: relative;
+    display: grid;
+    margin: 0;
+  }
+
+  .sheet {
+    position: relative;
+    background: var(--paper);
+    color: var(--paper-ink);
+    padding: 20px 20px 24px;
+    border-radius: var(--radius-sheet);
+    transform: rotate(-1deg);
+    margin-inline: 4px;
+    font-size: 11px;
+    line-height: 1.35;
+    overflow: hidden;
+  }
+
+  .sheet-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .form-name {
+    font-family: var(--font-serif);
+    font-size: 26px;
+    line-height: 1;
+  }
+
+  .agency {
+    max-width: 18ch;
+    text-align: right;
+    color: var(--paper-ink-2);
+    text-transform: uppercase;
+    font-size: 9px;
+    letter-spacing: 0.02em;
+  }
+
+  .form-title {
+    margin-top: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.02em;
+  }
+
+  .boxes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .box {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+    padding: 8px;
+    background: var(--paper-field);
+    border-radius: var(--radius-sheet);
+  }
+
+  .box-label,
+  .th {
+    color: var(--paper-ink-2);
+    font-size: 10px;
+  }
+
+  .table-title {
+    margin-top: 14px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .table {
+    display: grid;
+    grid-template-columns: 1.3fr 0.7fr 1fr 0.9fr;
+    gap: 6px 8px;
+    margin-top: 8px;
+    padding: 8px;
+    background: var(--paper-field);
+    border-radius: var(--radius-sheet);
+  }
+
+  .redact {
+    position: relative;
+    display: block;
+    height: 11px;
+    background: var(--paper-ink);
+    border-radius: 1px;
+  }
+
+  .redact::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border: 2px solid var(--blue);
+    border-radius: 3px;
+    opacity: 0;
+  }
+
+  .w-30 { width: 30%; }
+  .w-60 { width: 60%; }
+  .w-70 { width: 70%; }
+  .w-80 { width: 80%; }
+  .w-90 { width: 90%; }
+
+  .scan-track {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .scan {
+    position: absolute;
+    inset: 0;
+    transform: translateY(-100%);
+  }
+
+  .scan::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--blue);
+  }
+
+  .connector {
+    justify-self: center;
+    width: 2px;
+    height: 28px;
+    background: var(--ink);
+  }
+
+  .card {
+    background: var(--card);
+    color: var(--card-ink);
+    padding: 18px 20px 20px;
+    border-radius: 6px;
+  }
+
+  .card-title {
+    color: var(--card-ink-2);
+    font-size: var(--text-small);
+  }
+
+  dl {
+    margin: 10px 0 0;
+  }
+
+  .field {
+    display: grid;
+    grid-template-columns: 9.5em 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 0;
+    font-size: var(--text-small);
+  }
+
+  dt {
+    color: var(--card-ink-2);
+  }
+
+  dd {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cell {
+    display: inline-block;
+    height: 0.8em;
+    background: var(--extract);
+    border-radius: 1px;
+  }
+
+  .cell.letter {
+    width: 0.62em;
+  }
+
+  .cell.digit {
+    width: 0.56em;
+  }
+
+  .lit {
+    color: var(--card-ink);
+    padding-inline: 1px;
+  }
+
+  .valid {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: var(--text-small);
+  }
+
+  .valid::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #5bd18b;
+  }
+
+  figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 16px;
+    margin-top: 14px;
+    color: var(--ink-2);
+    font-size: var(--text-small);
+    line-height: var(--text-small--line-height);
+  }
+
+  .replay {
+    padding: 10px 0;
+    background: none;
+    border: 0;
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--blue);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+
+  :global(.js) .drawing.is-pending .field,
+  :global(.js) .drawing.is-pending .valid {
+    opacity: 0;
+  }
+
+  .is-running .scan {
+    animation: scan 1600ms var(--ease-in-out) 300ms both;
+  }
+
+  .is-running .redact::after {
+    animation: hit 700ms var(--ease-out) var(--at) both;
+  }
+
+  .is-running .field {
+    animation: arrive 300ms var(--ease-out) var(--at) both;
+  }
+
+  .is-running .valid {
+    animation: arrive 300ms var(--ease-out) 2000ms both;
+  }
+
+  @keyframes scan {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+  }
+
+  @keyframes hit {
+    0% { opacity: 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  @keyframes arrive {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .replay {
+      display: none;
+    }
+  }
+
+  @media (min-width: 900px) {
+    .drawing {
+      display: block;
+      min-height: 520px;
+    }
+
+    .sheet {
+      width: 66%;
+      transform: rotate(-3deg);
+      margin: 8px 0 0;
+    }
+
+    .connector {
+      display: none;
+    }
+
+    .card {
+      position: absolute;
+      right: 0;
+      top: 168px;
+      width: 52%;
+    }
+
+    figcaption {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+  }
+
+  @media (max-width: 899px) {
+    .field {
+      grid-template-columns: 8.5em 1fr;
+    }
+  }
+</style>
