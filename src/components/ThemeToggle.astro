@@ -1,0 +1,111 @@
+<button class="theme-toggle" type="button" aria-label="Switch theme">
+  <span class="to-dark">Dark</span>
+  <span class="to-light">Light</span>
+</button>
+
+<script>
+  const GROUND = { light: '#f3f3f0', dark: '#161719' } as const;
+  type Theme = keyof typeof GROUND;
+
+  const root = document.documentElement;
+  const systemQuery = matchMedia('(prefers-color-scheme: dark)');
+  const systemTheme = (): Theme => (systemQuery.matches ? 'dark' : 'light');
+  const currentTheme = (): Theme => (root.dataset.theme === 'dark' ? 'dark' : 'light');
+
+  function readStored(): Theme | null {
+    try {
+      const value = localStorage.getItem('theme');
+      return value === 'light' || value === 'dark' ? value : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeStored(theme: Theme) {
+    try {
+      if (theme === systemTheme()) localStorage.removeItem('theme');
+      else localStorage.setItem('theme', theme);
+    } catch {}
+  }
+
+  function syncThemeColor(theme: Theme) {
+    const forced = readStored() !== null;
+    document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
+      const scheme = meta.media.includes('dark') ? 'dark' : 'light';
+      meta.content = forced ? GROUND[theme] : GROUND[scheme];
+    });
+  }
+
+  function labelButtons(theme: Theme) {
+    const target = theme === 'dark' ? 'light' : 'dark';
+    document.querySelectorAll<HTMLButtonElement>('.theme-toggle').forEach((button) => {
+      button.setAttribute('aria-label', `Switch to ${target} theme`);
+    });
+  }
+
+  function applyTheme(theme: Theme) {
+    root.classList.add('theme-switching');
+    root.dataset.theme = theme;
+    labelButtons(theme);
+    syncThemeColor(theme);
+    requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('theme-switching')));
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('.theme-toggle').forEach((button) => {
+    button.addEventListener('click', () => {
+      const next: Theme = currentTheme() === 'dark' ? 'light' : 'dark';
+      writeStored(next);
+      applyTheme(next);
+    });
+  });
+
+  systemQuery.addEventListener('change', () => {
+    if (readStored() === null) applyTheme(systemTheme());
+  });
+
+  labelButtons(currentTheme());
+</script>
+
+<style>
+  .theme-toggle {
+    grid-area: toggle;
+    justify-self: end;
+    display: inline-grid;
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: transparent;
+    font-size: var(--text-small);
+    font-weight: 600;
+    transition:
+      transform 160ms var(--ease-out),
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+
+  .theme-toggle > span {
+    grid-area: 1 / 1;
+    align-self: center;
+  }
+
+  .theme-toggle:active {
+    transform: scale(0.97);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .theme-toggle:hover {
+      background: var(--ink);
+      color: var(--ground);
+    }
+  }
+
+  :global(:root:not([data-theme])) .theme-toggle {
+    display: none;
+  }
+
+  :global(:root[data-theme="dark"]) .to-dark,
+  :global(:root[data-theme="light"]) .to-light {
+    visibility: hidden;
+  }
+</style>

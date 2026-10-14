@@ -1,0 +1,197 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const profile = {
+  email: '[email removed]',
+  github: 'https://github.com/PrielKrishtal',
+  linkedin: 'https://www.linkedin.com/in/prielkrishtal',
+  cv: '/cv.pdf',
+};
+---
+
+<BaseLayout
+  title="Priel Krishtal, backend and LLM systems"
+  description="CS student building production backend and LLM systems. Looking for a part-time student software role, Python/backend."
+>
+  <section class="hero wrap" aria-labelledby="hero-name">
+    <div class="hero-copy">
+      <h1 id="hero-name" class="name" translate="no">Priel Krishtal</h1>
+      <p class="lede">
+        CS student building production backend and LLM systems.{' '}
+        <span>Looking for a part-time student software role, Python/backend.</span>
+      </p>
+      <div class="actions">
+        <a class="button" href={profile.cv}>Download CV</a>
+        <ul class="contact-links">
+          <li><a class="link" href={profile.github}>GitHub</a></li>
+          <li><a class="link" href={profile.linkedin}>LinkedIn</a></li>
+          <li><a class="link" href={`mailto:${profile.email}`}>Email</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="hero-stage placeholder">
+      Hero drawing: a Form 4 sheet is scanned and its fields lift into an extracted card. Built in Phase 2, with
+      its own phone layout.
+    </div>
+  </section>
+
+  <section id="pipeline" class="section wrap" aria-labelledby="pipeline-title">
+    <h2 id="pipeline-title" class="section-title">One filing, end to end</h2>
+    <div class="placeholder slot-belt">
+      Pipeline belt, driven by the live status feed: fetched, queued, classified, validated, stored, alerted. Includes the
+      switch that sends a filing that fails validation. Phase 2.
+    </div>
+  </section>
+
+  <section id="work" class="section wrap" aria-labelledby="work-title">
+    <h2 id="work-title" class="section-title">Work</h2>
+    <div class="work-grid">
+      <div class="placeholder slot-filingbot">FilingBot: problem, three numbers, stack, pipeline thumbnail, case study link. Phase 2.</div>
+      <div class="placeholder slot-clarityscan">ClarityScan: problem, numbers, stack, receipt before and after, case study link. Phase 2.</div>
+    </div>
+  </section>
+
+  <section id="skills" class="section wrap" aria-labelledby="skills-title">
+    <h2 id="skills-title" class="section-title">Skills</h2>
+    <div class="placeholder slot-short">Grouped plain text from PLAN §6.4. Phase 2.</div>
+  </section>
+
+  <section id="about" class="section wrap" aria-labelledby="about-title">
+    <h2 id="about-title" class="section-title">About</h2>
+    <div class="placeholder slot-short">Three or four sentences, education, languages. Phase 2.</div>
+  </section>
+
+  <section id="contact" class="section wrap" aria-labelledby="contact-title">
+    <h2 id="contact-title" class="section-title">Contact</h2>
+    <div class="placeholder slot-short">Email, LinkedIn, GitHub. Phase 2.</div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    display: grid;
+    gap: 40px;
+    padding-top: clamp(32px, 7vw, 96px);
+  }
+
+  .name {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: var(--text-display);
+    line-height: var(--text-display--line-height);
+    letter-spacing: -0.025em;
+  }
+
+  .lede {
+    margin-top: 28px;
+    max-width: 34ch;
+    font-size: var(--text-lead);
+    line-height: var(--text-lead--line-height);
+  }
+
+  .lede span {
+    color: var(--ink-2);
+  }
+
+  .actions {
+    margin-top: 32px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 28px;
+  }
+
+  .button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 0 24px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--ground);
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      transform 160ms var(--ease-out),
+      background-color 150ms ease;
+  }
+
+  .button:active {
+    transform: scale(0.97);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .button:hover {
+      background: var(--blue);
+    }
+  }
+
+  .contact-links {
+    display: flex;
+    gap: 22px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .hero-stage {
+    min-height: 360px;
+  }
+
+  .section {
+    padding-top: var(--section-gap);
+  }
+
+  .section-title {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: var(--text-title);
+    line-height: var(--text-title--line-height);
+    letter-spacing: -0.015em;
+    margin-bottom: 28px;
+  }
+
+  .slot-belt {
+    min-height: 320px;
+  }
+
+  .work-grid {
+    display: grid;
+    gap: 16px;
+  }
+
+  .slot-filingbot,
+  .slot-clarityscan {
+    min-height: 280px;
+  }
+
+  .slot-short {
+    min-height: 120px;
+    max-width: 68ch;
+  }
+
+  #contact {
+    padding-bottom: clamp(48px, 8vw, 120px);
+  }
+
+  @media (min-width: 900px) {
+    .hero {
+      grid-template-columns: 5fr 6fr;
+      align-items: center;
+      gap: 48px;
+    }
+
+    .hero-stage {
+      min-height: 440px;
+    }
+
+    .work-grid {
+      grid-template-columns: 7fr 5fr;
+    }
+
+    .slot-clarityscan {
+      margin-top: 96px;
+    }
+  }
+</style>

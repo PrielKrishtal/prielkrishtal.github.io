@@ -1,0 +1,23 @@
+---
+const built = new Date();
+const builtLabel = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(built);
+---
+
+<footer class="site-footer wrap">
+  <p>Built with Astro, deployed on GitHub Pages</p>
+  <p>Last updated <time datetime={built.toISOString().slice(0, 10)}>{builtLabel}</time></p>
+</footer>
+
+<style>
+  .site-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 32px;
+    padding-top: 32px;
+    padding-bottom: max(32px, env(safe-area-inset-bottom, 0px));
+    color: var(--ink-2);
+    font-size: var(--text-small);
+    line-height: var(--text-small--line-height);
+  }
+</style>

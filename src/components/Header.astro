@@ -1,0 +1,83 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+
+const links = [
+  { href: '/#work', label: 'Work' },
+  { href: '/#about', label: 'About' },
+  { href: '/cv.pdf', label: 'CV' },
+  { href: '/#contact', label: 'Contact' },
+];
+---
+
+<header class="site-header wrap">
+  <a class="wordmark" href="/" translate="no">Priel Krishtal</a>
+  <nav aria-label="Main">
+    <ul>
+      {links.map(({ href, label }) => <li><a href={href}>{label}</a></li>)}
+    </ul>
+  </nav>
+  <ThemeToggle />
+</header>
+
+<style>
+  .site-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'mark toggle'
+      'nav nav';
+    align-items: center;
+    row-gap: 6px;
+    padding-top: max(16px, env(safe-area-inset-top, 0px));
+    padding-bottom: 8px;
+  }
+
+  .wordmark {
+    grid-area: mark;
+    font-family: var(--font-serif);
+    font-size: var(--text-lead);
+    line-height: 1;
+    text-decoration: none;
+  }
+
+  nav {
+    grid-area: nav;
+  }
+
+  ul {
+    display: flex;
+    gap: 4px 22px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  nav a {
+    display: inline-block;
+    padding-block: 10px;
+    text-decoration-line: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+    transition: text-decoration-color 150ms ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    nav a:hover {
+      text-decoration-color: var(--blue);
+    }
+  }
+
+  @media (min-width: 760px) {
+    .site-header {
+      grid-template-columns: 1fr auto auto;
+      grid-template-areas: 'mark nav toggle';
+      column-gap: 36px;
+      padding-top: max(22px, env(safe-area-inset-top, 0px));
+    }
+
+    ul {
+      gap: 28px;
+    }
+  }
+</style>

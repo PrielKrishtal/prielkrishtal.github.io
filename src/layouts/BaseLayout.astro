@@ -1,0 +1,74 @@
+---
+import '@fontsource-variable/newsreader/opsz.css';
+import '@fontsource-variable/schibsted-grotesk/wght.css';
+import serifLatin from '@fontsource-variable/newsreader/files/newsreader-latin-opsz-normal.woff2?url';
+import sansLatin from '@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-wght-normal.woff2?url';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="preload" href={serifLatin} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={sansLatin} as="font" type="font/woff2" crossorigin />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3f3f0" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161719" />
+    <script is:inline>
+      (() => {
+        let stored = null;
+        try {
+          stored = localStorage.getItem('theme');
+        } catch {}
+        const system = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const theme = stored === 'light' || stored === 'dark' ? stored : system;
+        document.documentElement.dataset.theme = theme;
+        if (theme !== system) {
+          const ground = theme === 'dark' ? '#161719' : '#f3f3f0';
+          document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => meta.setAttribute('content', ground));
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<style>
+  .skip-link {
+    position: absolute;
+    left: var(--gutter);
+    top: 12px;
+    z-index: 10;
+    padding: 10px 16px;
+    background: var(--ink);
+    color: var(--ground);
+    border-radius: 999px;
+    transform: translateY(-160%);
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
+</style>
