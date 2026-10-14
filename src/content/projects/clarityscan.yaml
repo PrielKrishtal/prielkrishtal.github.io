@@ -16,7 +16,6 @@ numbers:
 decisions:
   - { chose: HTTP 202 now with OCR in FastAPI BackgroundTasks, over: OCR inside the upload request, because: null }
   - { chose: Google Cloud Vision, over: PaddleOCR, because: PaddleOCR ran out of memory on the free tier }
-  - { chose: a typed state machine enforced at the database layer, over: null, because: null }
   - { chose: "Numeric(10,2) for money", over: float, because: null }
 
 fixes:

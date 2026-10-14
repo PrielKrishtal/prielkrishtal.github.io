@@ -11,13 +11,24 @@ interface Props {
 }
 
 const { spec, name } = Astro.props;
-const { columns, boundary, band, states, paths } = spec;
+const { columns, boundary, band, states, paths, live } = spec;
 const count = columns.length;
 
-const lastInside = columns[boundary.to];
-const footerBesideLast = !lastInside.above && !lastInside.below;
-const footerMobileRow = footerBesideLast ? boundary.to + 1 : boundary.to + 2;
-const shift = footerBesideLast ? 1 : 2;
+const insideFree = (index: number) => index >= boundary.from && index <= boundary.to && !columns[index].above && !columns[index].below;
+let runStart = -1;
+let runEnd = -1;
+for (let index = boundary.from; index <= boundary.to; index++) {
+  if (!insideFree(index)) {
+    if (runStart !== -1) break;
+    continue;
+  }
+  if (runStart === -1) runStart = index;
+  runEnd = index;
+}
+const footerBesideFreeRows = runStart !== -1 && runEnd > runStart;
+const shift = footerBesideFreeRows ? 0 : 1;
+const footerMobileRow = footerBesideFreeRows ? `${runStart + 1} / ${runEnd + 2}` : String(boundary.to + 2);
+const boundaryEndRow = footerBesideFreeRows ? boundary.to + 2 : boundary.to + 3;
 
 interface Placed {
   node: Node;
@@ -28,7 +39,7 @@ interface Placed {
 
 const placed: Placed[] = columns.flatMap((column, index) => {
   const desktopColumn = index + 1;
-  const row = index <= boundary.to ? index + 1 : index + shift;
+  const row = index <= boundary.to ? index + 1 : index + 1 + shift;
   const items: Placed[] = [];
   if (column.above) {
     items.push({ node: column.above, kind: 'above', last: false, style: `--dc:${desktopColumn};--dr:1;--mc:2;--mr:${row}` });
@@ -40,30 +51,51 @@ const placed: Placed[] = columns.flatMap((column, index) => {
   return items;
 });
 
-const boundaryStyle = `--dc:${boundary.from + 1} / ${boundary.to + 2};--dr:2 / 5;--mc:1 / 3;--mr:${boundary.from + 1} / ${footerMobileRow + 1}`;
-const footerStyle = `--dc:${boundary.from + 1} / ${boundary.to + 2};--dr:4;--mc:2;--mr:${footerMobileRow}`;
+const boundaryStyle = `--dc:${boundary.from + 1} / ${boundary.to + 2};--dr:2 / 5;--mc:1 / 3;--mr:${boundary.from + 1} / ${boundaryEndRow}`;
+const footerStyle = `--dc:${boundary.from + 1} / ${boundary.to + 2};--dr:4;--mc:${footerBesideFreeRows ? '2' : '1 / 3'};--mr:${footerMobileRow}`;
 const pathData = JSON.stringify(paths.map(({ id, note, steps }) => ({ id, note, steps })));
+const liveNote = 'The moving filing shows how one filing travels. Status and count come from the status feed.';
 ---
 
-<figure class="dg" data-diagram data-paths={pathData} style={`--cols:${count}`}>
-  <div class="controls" role="group" aria-label={`Follow a path through ${name}`}>
-    {
-      paths.map((path, index) => (
-        <button type="button" class="path-button" data-path={path.id} aria-pressed={index === 0 ? 'true' : 'false'}>
-          {path.label}
-        </button>
-      ))
-    }
-  </div>
+<figure class="dg" data-diagram data-mode={live ? 'live' : 'paths'} data-paths={pathData} style={`--cols:${count}`}>
+  {
+    live ? (
+      <div class="status" data-status="checking" aria-live="polite">
+        <p class="status-state">
+          <span class="dot" aria-hidden="true" />
+          <span data-status-label>Checking {name}</span>
+        </p>
+        <p data-count-wrap hidden>
+          <b class="num" data-count /> filings processed
+        </p>
+        <p data-since-wrap hidden>
+          Last filing <span data-since />
+        </p>
+        <p class="source" data-source hidden>
+          Sample data until the live feed is connected
+        </p>
+      </div>
+    ) : (
+      <div class="controls" role="group" aria-label={`Follow a path through ${name}`}>
+        {paths.map((path, index) => (
+          <button type="button" class="path-button" data-path={path.id} aria-pressed={index === 0 ? 'true' : 'false'}>
+            {path.label}
+          </button>
+        ))}
+      </div>
+    )
+  }
 
   <div class="grid">
     <div class="boundary" style={boundaryStyle} aria-hidden="true"></div>
+    {live && <span class="packet" data-packet aria-hidden="true" />}
     {
       placed.map(({ node, kind, last, style }) => (
         <div class:list={['node', `is-${kind}`, { 'is-external': node.external, 'is-last': last }]} data-node={node.id} style={style}>
           <span class="wire" aria-hidden="true" />
           <b>{node.label}</b>
           <span>{node.detail}</span>
+          <i class="retry-mark" aria-hidden="true">retry</i>
           <i class="end-mark" aria-hidden="true">
             <svg viewBox="0 0 12 12" width="10" height="10">
               <path d="M3 3l6 6M9 3l-6 6" />
@@ -82,92 +114,37 @@ const pathData = JSON.stringify(paths.map(({ id, note, steps }) => ({ id, note, 
     states && (
       <ol class="states" aria-label="States">
         {states.map((state) => (
-          <li data-state={state}>{state}</li>
+          <li data-state-item={state}>{state}</li>
         ))}
       </ol>
     )
   }
 
-  <p class="note" data-note aria-live="polite">{paths[0].note}</p>
-  <figcaption>{spec.caption}</figcaption>
+  {
+    live && (
+      <div class="live-controls">
+        <button class="switch" type="button" role="switch" aria-checked="false" data-fail-switch>
+          <span class="track" aria-hidden="true">
+            <span class="thumb" />
+          </span>
+          <span>Send a filing that fails validation</span>
+        </button>
+        <button class="path-button" type="button" data-duplicate>
+          Send a duplicate filing
+        </button>
+        <button class="pause" type="button" aria-pressed="false" data-pause>
+          Pause animation
+        </button>
+      </div>
+    )
+  }
+
+  <p class="note" data-note aria-live="polite">{live ? liveNote : paths[0].note}</p>
+  <figcaption class="visually-hidden">{spec.caption}</figcaption>
 </figure>
 
 <script>
-  interface Step {
-    node: string;
-    state?: string;
-    end?: 'fail';
-  }
-  interface PathSpec {
-    id: string;
-    note: string;
-    steps: Step[];
-  }
-
-  const STEP_MS = 170;
-  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
-
-  document.querySelectorAll<HTMLElement>('[data-diagram]').forEach((figure) => {
-    const paths = JSON.parse(figure.dataset.paths ?? '[]') as PathSpec[];
-    const nodes = [...figure.querySelectorAll<HTMLElement>('[data-node]')];
-    const stateItems = [...figure.querySelectorAll<HTMLElement>('[data-state]')];
-    const buttons = [...figure.querySelectorAll<HTMLButtonElement>('[data-path]')];
-    const note = figure.querySelector<HTMLElement>('[data-note]')!;
-
-    function clear() {
-      [...nodes, ...stateItems].forEach((el) => {
-        el.style.setProperty('--d', '0ms');
-        el.classList.remove('is-lit', 'is-end-fail', 'is-current');
-      });
-    }
-
-    function show(pathId: string) {
-      const path = paths.find((candidate) => candidate.id === pathId);
-      if (!path) return;
-      buttons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.path === pathId)));
-      note.textContent = path.note;
-      figure.dataset.active = pathId;
-      clear();
-      void figure.offsetWidth;
-
-      const step = reduceMotion.matches ? 0 : STEP_MS;
-      let lastState: HTMLElement | undefined;
-      path.steps.forEach((entry, index) => {
-        const delay = `${index * step}ms`;
-        const node = nodes.find((candidate) => candidate.dataset.node === entry.node);
-        if (node && !node.classList.contains('is-lit')) {
-          node.style.setProperty('--d', delay);
-          node.classList.add('is-lit');
-        }
-        if (node && entry.end === 'fail') node.classList.add('is-end-fail');
-        const state = stateItems.find((candidate) => candidate.dataset.state === entry.state);
-        if (state) {
-          state.style.setProperty('--d', delay);
-          state.classList.add('is-lit');
-          if (entry.end === 'fail') state.classList.add('is-end-fail');
-          lastState = state;
-        }
-      });
-      lastState?.classList.add('is-current');
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        observer.disconnect();
-        show(paths[0].id);
-      },
-      { threshold: 0.35 },
-    );
-    observer.observe(figure);
-
-    buttons.forEach((button) =>
-      button.addEventListener('click', () => {
-        observer.disconnect();
-        show(button.dataset.path!);
-      }),
-    );
-  });
+  import '../../scripts/diagram.ts';
 </script>
 
 <style>
@@ -212,6 +189,180 @@ const pathData = JSON.stringify(paths.map(({ id, note, steps }) => ({ id, note, 
     color: var(--sheet);
   }
 
+  .status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 22px;
+    margin-bottom: 24px;
+    color: var(--ink-2);
+  }
+
+  .status-state {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--ink-2);
+  }
+
+  [data-status='up'] .dot {
+    background: var(--ok);
+  }
+
+  [data-status='degraded'] .dot {
+    background: var(--fail);
+  }
+
+  .status b {
+    display: inline-block;
+    margin-right: 4px;
+    color: var(--ink);
+    font-size: var(--text-lead);
+    font-weight: 600;
+  }
+
+  .source {
+    font-size: var(--text-small);
+  }
+
+  .packet {
+    position: absolute;
+    left: -6px;
+    top: -6px;
+    z-index: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    background: var(--ink);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms ease;
+  }
+
+  .packet.is-real {
+    background: var(--blue);
+  }
+
+  .packet.is-visible {
+    opacity: 1;
+  }
+
+  .node.is-active::before {
+    opacity: 1;
+    transition-delay: 0ms;
+    transition-duration: 150ms;
+  }
+
+  .retry-mark {
+    position: absolute;
+    top: -11px;
+    right: 14px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--fail);
+    color: var(--sheet);
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+
+  .node.is-retry .retry-mark {
+    opacity: 1;
+  }
+
+  .live-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 24px;
+    margin-top: 28px;
+  }
+
+  :global(:root:not(.js)) .live-controls {
+    display: none;
+  }
+
+  .switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 0;
+    background: none;
+    border: 0;
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .track {
+    position: relative;
+    flex: none;
+    width: 46px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--bar);
+    transition: background-color 180ms ease;
+  }
+
+  .thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--sheet);
+    border: 1.5px solid var(--ink);
+    transition: transform 180ms var(--ease-out);
+  }
+
+  .switch[aria-checked='true'] .track {
+    background: var(--fail);
+  }
+
+  .switch[aria-checked='true'] .thumb {
+    transform: translateX(20px);
+  }
+
+  .switch:active .thumb {
+    transform: scale(0.94);
+  }
+
+  .switch[aria-checked='true']:active .thumb {
+    transform: translateX(20px) scale(0.94);
+  }
+
+  .pause {
+    min-height: 44px;
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--ink-2);
+    font-size: var(--text-small);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--bar);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .packet,
+    .pause {
+      display: none;
+    }
+  }
+
   .grid {
     --gap-x: 28px;
     --gap-y: 24px;
@@ -221,6 +372,7 @@ const pathData = JSON.stringify(paths.map(({ id, note, steps }) => ({ id, note, 
     column-gap: var(--gap-x);
     row-gap: var(--gap-y);
     align-items: center;
+    position: relative;
   }
 
   .boundary,
@@ -416,11 +568,57 @@ const pathData = JSON.stringify(paths.map(({ id, note, steps }) => ({ id, note, 
   }
 
   @media (max-width: 899px) {
+    .dg {
+      padding: 16px;
+    }
+
+    .status {
+      margin-bottom: 14px;
+      gap: 2px 18px;
+    }
+
+    .states {
+      gap: 6px;
+      margin-top: 16px;
+    }
+
+    .states li {
+      padding: 3px 10px;
+      font-size: var(--text-small);
+    }
+
+    .footer {
+      align-self: start;
+      line-height: 1.35;
+    }
+
+    .note {
+      font-size: 15px;
+    }
+
+    .controls {
+      margin-bottom: 16px;
+    }
+
+    .node {
+      padding: 8px 12px;
+    }
+
+    .live-controls {
+      margin-top: 16px;
+      gap: 2px 20px;
+    }
+
+    .note {
+      margin-top: 12px;
+      min-height: 0;
+    }
+
     .grid {
-      --gap-x: 20px;
-      --gap-y: 22px;
+      --gap-x: 16px;
+      --gap-y: 12px;
       position: relative;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.9fr);
       grid-template-rows: none;
       grid-auto-rows: auto;
       align-items: stretch;

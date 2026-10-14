@@ -19,7 +19,7 @@ import { skills } from '../data/profile';
 <style>
   .skills {
     display: grid;
-    gap: 20px 48px;
+    gap: 14px 48px;
     margin: 0;
     max-width: 1080px;
   }
@@ -32,6 +32,18 @@ import { skills } from '../data/profile';
     margin: 2px 0 0;
     color: var(--ink);
     max-width: 52ch;
+  }
+
+  @media (max-width: 759px) {
+    dt,
+    dd {
+      display: inline;
+      margin: 0;
+    }
+
+    dt::after {
+      content: ': ';
+    }
   }
 
   @media (min-width: 760px) {

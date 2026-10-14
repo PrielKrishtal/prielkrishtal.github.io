@@ -1,8 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HeroDrawing from '../components/HeroDrawing.astro';
-import Belt from '../components/Belt.astro';
-import Work from '../components/Work.astro';
+import Project from '../components/Project.astro';
 import Skills from '../components/Skills.astro';
 import About from '../components/About.astro';
 import Contact from '../components/Contact.astro';
@@ -28,8 +27,8 @@ import { profile } from '../data/profile';
     <HeroDrawing />
   </section>
 
-  <Belt />
-  <Work />
+  <Project id="filingbot" />
+  <Project id="clarityscan" />
   <Skills />
   <About />
   <Contact />
@@ -38,7 +37,7 @@ import { profile } from '../data/profile';
 <style>
   .hero {
     display: grid;
-    gap: 48px;
+    gap: 32px;
     padding-top: clamp(32px, 7vw, 88px);
   }
 

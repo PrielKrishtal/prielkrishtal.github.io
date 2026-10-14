@@ -2,14 +2,14 @@
 import ThemeToggle from './ThemeToggle.astro';
 
 const links = [
-  { href: '/#work', label: 'Work' },
-  { href: '/#about', label: 'About' },
-  { href: '/#contact', label: 'Contact' },
+  { href: '#filingbot', label: 'Work' },
+  { href: '#about', label: 'About' },
+  { href: '#contact', label: 'Contact' },
 ];
 ---
 
 <header class="site-header wrap">
-  <a class="wordmark" href="/" translate="no">Priel Krishtal</a>
+  <a class="wordmark" href="#top" translate="no">Priel Krishtal</a>
   <nav aria-label="Main">
     <ul>
       {links.map(({ href, label }) => <li><a href={href}>{label}</a></li>)}

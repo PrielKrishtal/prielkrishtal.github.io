@@ -16,19 +16,18 @@ numbers:
 decisions:
   - { chose: "rules first, then the LLM", over: "the LLM on every filing", because: null }
   - { chose: Redis Streams with consumer groups, over: null, because: null }
-  - { chose: "Pydantic validation with one corrective retry, then a dead-letter queue", over: null, because: null }
   - { chose: GPT-OSS 120B on Groq, over: Llama 3.3 70B (the earlier version), because: null }
 
 fixes:
   - { broke: "Groq rate-limit errors in production, caught by Sentry", fix: null }
-  - { broke: "LLM output that doesn't match the schema", fix: "one corrective retry, then the dead-letter queue" }
 
 screenshots:
   - { label: A FilingBot alert in Telegram, shape: phone }
 
 # VERIFY(priel): check against the real architecture
 diagram:
-  caption: How a filing moves through FilingBot. Pick a path to follow it.
+  live: true
+  caption: How a filing moves through FilingBot.
   boundary: { label: Docker Compose on an Oracle Cloud VM, from: 1, to: 5 }
   band: Sentry on 4 services. A correlation ID on every filing's JSON logs.
   columns:
@@ -53,7 +52,7 @@ diagram:
     - id: invalid
       label: Fails validation
       note: One corrective retry, then the filing goes to the dead-letter queue.
-      steps: [{ node: edgar }, { node: poller }, { node: stream }, { node: classify }, { node: groq }, { node: validate }, { node: dlq, end: fail }]
+      steps: [{ node: edgar }, { node: poller }, { node: stream }, { node: classify }, { node: groq }, { node: validate, mark: retry }, { node: dlq, end: fail }]
     - id: duplicate
       label: A duplicate filing
       note: PostgreSQL's unique constraint rejects it.

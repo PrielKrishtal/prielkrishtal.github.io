@@ -20,10 +20,12 @@ const step = z.strictObject({
   node: text,
   state: text.optional(),
   end: z.literal('fail').optional(),
+  mark: z.literal('retry').optional(),
 });
 
 const diagram = z
   .object({
+    live: z.boolean().default(false),
     caption: text,
     boundary: z.strictObject({ label: text, from: z.number().int().nonnegative(), to: z.number().int().nonnegative() }),
     band: text.optional(),
@@ -57,9 +59,9 @@ const projects = defineCollection({
     problem: text,
     stack: z.array(text).min(1),
     repo: z.url(),
-    numbers: z.array(z.strictObject({ value: text, label: text })).min(3).max(5),
-    decisions: z.array(z.strictObject({ chose: text, over: text.nullable(), because: text.nullable() })).min(3).max(4),
-    fixes: z.array(z.strictObject({ broke: text, fix: text.nullable() })).min(1).max(2),
+    numbers: z.array(z.strictObject({ value: text, label: text })).min(3).max(4),
+    decisions: z.array(z.strictObject({ chose: text, over: text.nullable(), because: text.nullable() })).min(1).max(3),
+    fixes: z.array(z.strictObject({ broke: text, fix: text.nullable() })).length(1),
     screenshots: z.array(
       z.strictObject({
         label: text,
