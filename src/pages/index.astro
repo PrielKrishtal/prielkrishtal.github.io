@@ -5,7 +5,6 @@ const profile = {
   email: '[email removed]',
   github: 'https://github.com/PrielKrishtal',
   linkedin: 'https://www.linkedin.com/in/prielkrishtal',
-  cv: '/cv.pdf',
 };
 ---
 
@@ -21,11 +20,10 @@ const profile = {
         <span>Looking for a part-time student software role, Python/backend.</span>
       </p>
       <div class="actions">
-        <a class="button" href={profile.cv}>Download CV</a>
+        <a class="button" href={`mailto:${profile.email}`}>Get in touch</a>
         <ul class="contact-links">
-          <li><a class="link" href={profile.github}>GitHub</a></li>
           <li><a class="link" href={profile.linkedin}>LinkedIn</a></li>
-          <li><a class="link" href={`mailto:${profile.email}`}>Email</a></li>
+          <li><a class="link" href={profile.github}>GitHub</a></li>
         </ul>
       </div>
     </div>
