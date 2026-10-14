@@ -1,52 +1,51 @@
 ---
+import { getCollection } from 'astro:content';
 import ReceiptScrub from './ReceiptScrub.astro';
-import { clarityscan, filingbot, type Project } from '../data/profile';
 
-const entries: { project: Project; live: boolean }[] = [
-  { project: filingbot, live: true },
-  { project: clarityscan, live: false },
-];
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 ---
 
 <section id="work" class="section wrap" aria-labelledby="work-title">
   <h2 id="work-title" class="section-title" data-reveal>Work</h2>
 
   {
-    entries.map(({ project, live }, index) => (
-      <article class={`entry entry-${project.slug}`} aria-labelledby={`${project.slug}-title`}>
+    projects.map(({ id, data }) => (
+      <article class={`entry entry-${id}`} aria-labelledby={`${id}-title`}>
         <div class="entry-text" data-reveal>
           <div class="entry-head">
-            <h3 id={`${project.slug}-title`}>{project.name}</h3>
-            <span class={`status ${live ? 'is-live' : ''}`}>{project.status}</span>
+            <h3 id={`${id}-title`} style={`view-transition-name: project-${id}`}>
+              {data.name}
+            </h3>
+            <span class:list={['status', { 'is-live': data.status === 'Live 24/7' }]}>{data.status}</span>
           </div>
-          <p class="problem">{project.problem}</p>
+          <p class="problem">{data.problem}</p>
           <dl class="numbers">
-            {project.numbers.map((number) => (
+            {data.numbers.slice(0, 3).map((number) => (
               <div>
                 <dt class="num">{number.value}</dt>
-                <dd>{number.context}</dd>
+                <dd>{number.label}</dd>
               </div>
             ))}
           </dl>
-          <p class="stack">{project.stack.join(', ')}</p>
+          <p class="stack">{data.stack.join(', ')}</p>
           <p class="entry-links">
-            <a class="link" href={`/work/${project.slug}`}>
-              Read the {project.name} case study
+            <a class="link" href={`/work/${id}`}>
+              See how {data.name} works
             </a>
-            <a class="link" href={project.repo}>
+            <a class="link" href={data.repo}>
               Code on GitHub
             </a>
           </p>
         </div>
         <div class="entry-visual" data-reveal style="--reveal-step: 1">
-          {index === 0 ? (
+          {id === 'clarityscan' ? (
+            <ReceiptScrub />
+          ) : (
             <figure class="shot-slot">
               <div class="shot-frame">
                 <p>Screenshot to come: a real FilingBot alert in Telegram.</p>
               </div>
             </figure>
-          ) : (
-            <ReceiptScrub />
           )}
         </div>
       </article>

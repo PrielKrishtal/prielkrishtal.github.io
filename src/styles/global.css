@@ -160,6 +160,29 @@
   }
 }
 
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+  animation-timing-function: ease;
+}
+
+::view-transition-group(*) {
+  animation-duration: 320ms;
+  animation-timing-function: var(--ease-in-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 @layer components {
   .wrap {
     width: 100%;
@@ -251,8 +274,12 @@
     white-space: nowrap;
   }
 
-  .stack {
+  pre,
+  code {
     font-family: var(--font-mono);
+  }
+
+  .stack {
     font-size: var(--text-small);
     line-height: var(--text-small--line-height);
     color: var(--ink-2);

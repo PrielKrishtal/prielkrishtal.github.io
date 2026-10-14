@@ -1,0 +1,60 @@
+name: FilingBot
+order: 1
+status: Live 24/7
+host: Oracle Cloud VM, Docker Compose
+summary: Event-driven pipeline that reads SEC Form 4 insider-trade filings and alerts on the high-signal ones.
+problem: Polls SEC EDGAR for Form 4 insider-trade filings and sends Telegram alerts on the high-signal trades.
+stack: [Python, FastAPI, Redis Streams, PostgreSQL, Docker Compose, Oracle Cloud, Groq, Pydantic, Sentry, GitHub Actions]
+repo: https://github.com/PrielKrishtal/filingbot
+
+numbers:
+  - { value: "570+", label: live filings processed }
+  - { value: "67%", label: fewer LLM calls across 572 filings }
+  - { value: "427 MB", label: "Docker image, down from 1.8 GB" }
+  - { value: "4", label: services monitored by Sentry }
+
+decisions:
+  - { chose: "rules first, then the LLM", over: "the LLM on every filing", because: null }
+  - { chose: Redis Streams with consumer groups, over: null, because: null }
+  - { chose: "Pydantic validation with one corrective retry, then a dead-letter queue", over: null, because: null }
+  - { chose: GPT-OSS 120B on Groq, over: Llama 3.3 70B (the earlier version), because: null }
+
+fixes:
+  - { broke: "Groq rate-limit errors in production, caught by Sentry", fix: null }
+  - { broke: "LLM output that doesn't match the schema", fix: "one corrective retry, then the dead-letter queue" }
+
+screenshots:
+  - { label: A FilingBot alert in Telegram, shape: phone }
+
+# VERIFY(priel): check against the real architecture
+diagram:
+  caption: How a filing moves through FilingBot. Pick a path to follow it.
+  boundary: { label: Docker Compose on an Oracle Cloud VM, from: 1, to: 5 }
+  band: Sentry on 4 services. A correlation ID on every filing's JSON logs.
+  columns:
+    - { id: edgar, label: SEC EDGAR, detail: Form 4 filings, external: true }
+    - { id: poller, label: Poller, detail: checks EDGAR for new filings }
+    - { id: stream, label: Redis Streams, detail: consumer groups }
+    - id: classify
+      label: Classifier
+      detail: "rules first, then the LLM"
+      above: { id: groq, label: Groq, detail: GPT-OSS 120B, external: true }
+    - id: validate
+      label: Pydantic
+      detail: one corrective retry
+      below: { id: dlq, label: Dead-letter queue, detail: after the retry fails }
+    - { id: store, label: PostgreSQL, detail: unique constraint drops duplicates }
+    - { id: telegram, label: Telegram, detail: alerts on high-signal trades, external: true }
+  paths:
+    - id: valid
+      label: A valid filing
+      note: Validated, stored once, alerted if it's high-signal.
+      steps: [{ node: edgar }, { node: poller }, { node: stream }, { node: classify }, { node: groq }, { node: validate }, { node: store }, { node: telegram }]
+    - id: invalid
+      label: Fails validation
+      note: One corrective retry, then the filing goes to the dead-letter queue.
+      steps: [{ node: edgar }, { node: poller }, { node: stream }, { node: classify }, { node: groq }, { node: validate }, { node: dlq, end: fail }]
+    - id: duplicate
+      label: A duplicate filing
+      note: PostgreSQL's unique constraint rejects it.
+      steps: [{ node: edgar }, { node: poller }, { node: stream }, { node: classify }, { node: validate }, { node: store, end: fail }]

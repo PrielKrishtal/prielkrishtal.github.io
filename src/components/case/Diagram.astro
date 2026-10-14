@@ -1,0 +1,455 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+type Spec = CollectionEntry<'projects'>['data']['diagram'];
+type Column = Spec['columns'][number];
+type Node = Pick<Column, 'id' | 'label' | 'detail' | 'external'>;
+
+interface Props {
+  spec: Spec;
+  name: string;
+}
+
+const { spec, name } = Astro.props;
+const { columns, boundary, band, states, paths } = spec;
+const count = columns.length;
+
+const lastInside = columns[boundary.to];
+const footerBesideLast = !lastInside.above && !lastInside.below;
+const footerMobileRow = footerBesideLast ? boundary.to + 1 : boundary.to + 2;
+const shift = footerBesideLast ? 1 : 2;
+
+interface Placed {
+  node: Node;
+  kind: 'main' | 'above' | 'below';
+  last: boolean;
+  style: string;
+}
+
+const placed: Placed[] = columns.flatMap((column, index) => {
+  const desktopColumn = index + 1;
+  const row = index <= boundary.to ? index + 1 : index + shift;
+  const items: Placed[] = [];
+  if (column.above) {
+    items.push({ node: column.above, kind: 'above', last: false, style: `--dc:${desktopColumn};--dr:1;--mc:2;--mr:${row}` });
+  }
+  items.push({ node: column, kind: 'main', last: index === count - 1, style: `--dc:${desktopColumn};--dr:2;--mc:1;--mr:${row}` });
+  if (column.below) {
+    items.push({ node: column.below, kind: 'below', last: false, style: `--dc:${desktopColumn};--dr:3;--mc:2;--mr:${row}` });
+  }
+  return items;
+});
+
+const boundaryStyle = `--dc:${boundary.from + 1} / ${boundary.to + 2};--dr:2 / 5;--mc:1 / 3;--mr:${boundary.from + 1} / ${footerMobileRow + 1}`;
+const footerStyle = `--dc:${boundary.from + 1} / ${boundary.to + 2};--dr:4;--mc:2;--mr:${footerMobileRow}`;
+const pathData = JSON.stringify(paths.map(({ id, note, steps }) => ({ id, note, steps })));
+---
+
+<figure class="dg" data-diagram data-paths={pathData} style={`--cols:${count}`}>
+  <div class="controls" role="group" aria-label={`Follow a path through ${name}`}>
+    {
+      paths.map((path, index) => (
+        <button type="button" class="path-button" data-path={path.id} aria-pressed={index === 0 ? 'true' : 'false'}>
+          {path.label}
+        </button>
+      ))
+    }
+  </div>
+
+  <div class="grid">
+    <div class="boundary" style={boundaryStyle} aria-hidden="true"></div>
+    {
+      placed.map(({ node, kind, last, style }) => (
+        <div class:list={['node', `is-${kind}`, { 'is-external': node.external, 'is-last': last }]} data-node={node.id} style={style}>
+          <span class="wire" aria-hidden="true" />
+          <b>{node.label}</b>
+          <span>{node.detail}</span>
+          <i class="end-mark" aria-hidden="true">
+            <svg viewBox="0 0 12 12" width="10" height="10">
+              <path d="M3 3l6 6M9 3l-6 6" />
+            </svg>
+          </i>
+        </div>
+      ))
+    }
+    <div class="footer" style={footerStyle}>
+      <b>{boundary.label}</b>
+      {band && <span>{band}</span>}
+    </div>
+  </div>
+
+  {
+    states && (
+      <ol class="states" aria-label="States">
+        {states.map((state) => (
+          <li data-state={state}>{state}</li>
+        ))}
+      </ol>
+    )
+  }
+
+  <p class="note" data-note aria-live="polite">{paths[0].note}</p>
+  <figcaption>{spec.caption}</figcaption>
+</figure>
+
+<script>
+  interface Step {
+    node: string;
+    state?: string;
+    end?: 'fail';
+  }
+  interface PathSpec {
+    id: string;
+    note: string;
+    steps: Step[];
+  }
+
+  const STEP_MS = 170;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+  document.querySelectorAll<HTMLElement>('[data-diagram]').forEach((figure) => {
+    const paths = JSON.parse(figure.dataset.paths ?? '[]') as PathSpec[];
+    const nodes = [...figure.querySelectorAll<HTMLElement>('[data-node]')];
+    const stateItems = [...figure.querySelectorAll<HTMLElement>('[data-state]')];
+    const buttons = [...figure.querySelectorAll<HTMLButtonElement>('[data-path]')];
+    const note = figure.querySelector<HTMLElement>('[data-note]')!;
+
+    function clear() {
+      [...nodes, ...stateItems].forEach((el) => {
+        el.style.setProperty('--d', '0ms');
+        el.classList.remove('is-lit', 'is-end-fail', 'is-current');
+      });
+    }
+
+    function show(pathId: string) {
+      const path = paths.find((candidate) => candidate.id === pathId);
+      if (!path) return;
+      buttons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.path === pathId)));
+      note.textContent = path.note;
+      figure.dataset.active = pathId;
+      clear();
+      void figure.offsetWidth;
+
+      const step = reduceMotion.matches ? 0 : STEP_MS;
+      let lastState: HTMLElement | undefined;
+      path.steps.forEach((entry, index) => {
+        const delay = `${index * step}ms`;
+        const node = nodes.find((candidate) => candidate.dataset.node === entry.node);
+        if (node && !node.classList.contains('is-lit')) {
+          node.style.setProperty('--d', delay);
+          node.classList.add('is-lit');
+        }
+        if (node && entry.end === 'fail') node.classList.add('is-end-fail');
+        const state = stateItems.find((candidate) => candidate.dataset.state === entry.state);
+        if (state) {
+          state.style.setProperty('--d', delay);
+          state.classList.add('is-lit');
+          if (entry.end === 'fail') state.classList.add('is-end-fail');
+          lastState = state;
+        }
+      });
+      lastState?.classList.add('is-current');
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        observer.disconnect();
+        show(paths[0].id);
+      },
+      { threshold: 0.35 },
+    );
+    observer.observe(figure);
+
+    buttons.forEach((button) =>
+      button.addEventListener('click', () => {
+        observer.disconnect();
+        show(button.dataset.path!);
+      }),
+    );
+  });
+</script>
+
+<style>
+  .dg {
+    margin: 0;
+    padding: clamp(20px, 3vw, 32px);
+    background: var(--sheet);
+    border-radius: 6px;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+
+  :global(:root:not(.js)) .controls {
+    display: none;
+  }
+
+  .path-button {
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: transparent;
+    font-size: var(--text-small);
+    font-weight: 600;
+    transition:
+      transform 160ms var(--ease-out),
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+
+  .path-button:active {
+    transform: scale(0.97);
+  }
+
+  .path-button[aria-pressed='true'] {
+    background: var(--ink);
+    color: var(--sheet);
+  }
+
+  .grid {
+    --gap-x: 28px;
+    --gap-y: 24px;
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    grid-template-rows: auto auto auto auto;
+    column-gap: var(--gap-x);
+    row-gap: var(--gap-y);
+    align-items: center;
+  }
+
+  .boundary,
+  .node,
+  .footer {
+    grid-column: var(--dc);
+    grid-row: var(--dr);
+  }
+
+  .boundary {
+    align-self: stretch;
+    margin: -14px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+
+  .node {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 2px;
+    align-content: start;
+    padding: 12px 14px;
+    background: var(--sheet);
+    border: 2px solid var(--ink);
+    border-radius: 6px;
+    transition:
+      border-color 200ms ease,
+      color 200ms ease;
+    transition-delay: var(--d, 0ms);
+  }
+
+  .node span {
+    transition: color 200ms ease;
+    transition-delay: var(--d, 0ms);
+  }
+
+  .node.is-external {
+    border-color: var(--ink-2);
+  }
+
+  .node b {
+    font-size: var(--text-small);
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .node span {
+    color: var(--ink-2);
+    font-size: var(--text-small);
+    line-height: 1.35;
+  }
+
+  .wire {
+    position: absolute;
+    background: var(--ink);
+    pointer-events: none;
+  }
+
+  .node::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border: 2px solid var(--blue);
+    border-radius: 9px;
+    opacity: 0;
+    transition: opacity 260ms var(--ease-out);
+    transition-delay: var(--d, 0ms);
+  }
+
+  .node.is-lit::before {
+    opacity: 1;
+  }
+
+  .node.is-end-fail::before {
+    border-color: var(--fail);
+  }
+
+  .end-mark {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--fail);
+    color: var(--sheet);
+    opacity: 0;
+    transition: opacity 200ms ease;
+    transition-delay: var(--d, 0ms);
+  }
+
+  .end-mark svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .node.is-end-fail .end-mark {
+    opacity: 1;
+  }
+
+  [data-active] .node:not(.is-lit) {
+    border-color: var(--bar);
+    color: var(--ink-2);
+  }
+
+
+  .footer {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 2px;
+    font-size: var(--text-small);
+    line-height: var(--text-small--line-height);
+  }
+
+  .footer span {
+    color: var(--ink-2);
+  }
+
+  .states {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 28px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .states li {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--ground);
+    color: var(--ink-2);
+    font-size: var(--text-small);
+    font-weight: 600;
+    transition:
+      background-color 200ms ease,
+      color 200ms ease;
+    transition-delay: var(--d, 0ms);
+  }
+
+  .states li.is-lit {
+    color: var(--ink);
+  }
+
+  .states li.is-current {
+    background: var(--blue);
+    color: var(--sheet);
+  }
+
+  .states li.is-current.is-end-fail {
+    background: var(--fail);
+  }
+
+  .note {
+    margin-top: 20px;
+    min-height: 1.55em;
+    font-weight: 600;
+  }
+
+  figcaption {
+    margin-top: 4px;
+    color: var(--ink-2);
+    font-size: var(--text-small);
+  }
+
+  @media (min-width: 900px) {
+    .is-main:not(.is-last) > .wire {
+      left: 100%;
+      top: 50%;
+      width: var(--gap-x);
+      height: 2px;
+    }
+
+    .is-above > .wire {
+      top: 100%;
+      left: 50%;
+      width: 2px;
+      height: var(--gap-y);
+    }
+
+    .is-below > .wire {
+      bottom: 100%;
+      left: 50%;
+      width: 2px;
+      height: var(--gap-y);
+    }
+  }
+
+  @media (max-width: 899px) {
+    .grid {
+      --gap-x: 20px;
+      --gap-y: 22px;
+      position: relative;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+      grid-template-rows: none;
+      grid-auto-rows: auto;
+      align-items: stretch;
+    }
+
+    .boundary,
+    .node,
+    .footer {
+      grid-column: var(--mc);
+      grid-row: var(--mr);
+    }
+
+    .is-main:not(.is-last) > .wire {
+      top: 100%;
+      left: 50%;
+      width: 2px;
+      height: var(--gap-y);
+    }
+
+    .footer {
+      align-self: center;
+    }
+
+    .is-above > .wire,
+    .is-below > .wire {
+      right: 100%;
+      top: 50%;
+      width: var(--gap-x);
+      height: 2px;
+    }
+  }
+</style>

@@ -1,0 +1,53 @@
+name: ClarityScan
+order: 2
+status: Deployed
+host: Render
+summary: Receipt-management SaaS that turns skewed, low-light Hebrew and English receipts into reviewable records.
+problem: Receipt management that reads skewed, low-light Hebrew and English receipts without blocking the upload.
+stack: [Python, FastAPI, React 18, Tailwind CSS, PostgreSQL, SQLAlchemy (async), Alembic, Google Cloud Vision, OpenCV, Render]
+repo: https://github.com/PrielKrishtal/clarity-scan
+
+numbers:
+  - { value: "<50 ms", label: HTTP 202 on upload }
+  - { value: "~70%", label: better extraction on degraded images (estimate) }
+  - { value: "5/min", label: rate limit per IP }
+  - { value: "5", label: states in the receipt state machine }
+
+decisions:
+  - { chose: HTTP 202 now with OCR in FastAPI BackgroundTasks, over: OCR inside the upload request, because: null }
+  - { chose: Google Cloud Vision, over: PaddleOCR, because: PaddleOCR ran out of memory on the free tier }
+  - { chose: a typed state machine enforced at the database layer, over: null, because: null }
+  - { chose: "Numeric(10,2) for money", over: float, because: null }
+
+fixes:
+  - { broke: "RAM exhaustion on the live OCR worker (PaddleOCR)", fix: "moved OCR to Google Cloud Vision with no downtime, then added FSM and OCR-adapter tests" }
+
+screenshots:
+  - { label: The ClarityScan dashboard, shape: wide }
+  - { label: A receipt before OpenCV, shape: portrait }
+  - { label: The same receipt after OpenCV, shape: portrait }
+
+# VERIFY(priel): check against the real architecture
+diagram:
+  caption: How a receipt moves through ClarityScan. Pick an outcome to follow it.
+  boundary: { label: Deployed on Render, from: 1, to: 5 }
+  columns:
+    - { id: client, label: React 18 client, detail: uploads a receipt photo, external: true }
+    - { id: api, label: FastAPI, detail: answers HTTP 202 in under 50 ms }
+    - { id: task, label: BackgroundTasks, detail: OCR runs off the request }
+    - { id: opencv, label: OpenCV, detail: "blur, Otsu threshold, homography" }
+    - id: ocr
+      label: OCR adapter
+      detail: Hebrew and English
+      above: { id: vision, label: Google Cloud Vision, detail: text extraction, external: true }
+    - { id: db, label: PostgreSQL, detail: "state machine, Numeric(10,2) money" }
+  states: [UPLOADED, PROCESSING, REVIEW_NEEDED, APPROVED, FAILED]
+  paths:
+    - id: approved
+      label: Approved receipt
+      note: The upload answers at once; OCR runs in the background, then the receipt waits for review.
+      steps: [{ node: client }, { node: api, state: UPLOADED }, { node: task, state: PROCESSING }, { node: opencv, state: PROCESSING }, { node: ocr, state: PROCESSING }, { node: vision, state: PROCESSING }, { node: db, state: REVIEW_NEEDED }, { node: db, state: APPROVED }]
+    - id: failed
+      label: Failed receipt
+      note: Same flow, ending in the FAILED state.
+      steps: [{ node: client }, { node: api, state: UPLOADED }, { node: task, state: PROCESSING }, { node: opencv, state: PROCESSING }, { node: ocr, state: PROCESSING }, { node: vision, state: PROCESSING }, { node: db, state: REVIEW_NEEDED }, { node: db, state: FAILED, end: fail }]

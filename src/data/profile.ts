@@ -8,49 +8,6 @@ export const profile = {
   seeking: 'Looking for a part-time student software role, Python/backend.',
 } as const;
 
-export interface KeyNumber {
-  value: string;
-  context: string;
-}
-
-export interface Project {
-  slug: string;
-  name: string;
-  status: string;
-  problem: string;
-  numbers: KeyNumber[];
-  stack: string[];
-  repo: string;
-}
-
-export const filingbot: Project = {
-  slug: 'filingbot',
-  name: 'FilingBot',
-  status: 'Live 24/7',
-  problem: 'Polls SEC EDGAR for Form 4 insider-trade filings and sends Telegram alerts on the high-signal trades.',
-  numbers: [
-    { value: '570+', context: 'live filings processed in production' },
-    { value: '67%', context: 'fewer LLM calls across 572 production filings, because rules handle stock grants and tax withholding' },
-    { value: '427 MB', context: 'Docker image, down from 1.8 GB (77% smaller)' },
-  ],
-  stack: ['Python', 'FastAPI', 'Redis Streams', 'PostgreSQL', 'Docker Compose', 'Oracle Cloud', 'Groq', 'Pydantic', 'Sentry', 'GitHub Actions'],
-  repo: 'https://github.com/PrielKrishtal/filingbot',
-};
-
-export const clarityscan: Project = {
-  slug: 'clarityscan',
-  name: 'ClarityScan',
-  status: 'Deployed',
-  problem: 'Receipt management that reads skewed, low-light Hebrew and English receipts without blocking the upload.',
-  numbers: [
-    { value: '<50 ms', context: 'to answer an upload with HTTP 202 while OCR runs in the background' },
-    { value: '~70%', context: 'higher extraction accuracy on degraded images (estimate)' },
-    { value: '5/min', context: 'rate limit per IP, with JWT scoping and Argon2 hashing' },
-  ],
-  stack: ['Python', 'FastAPI', 'React 18', 'Tailwind CSS', 'PostgreSQL', 'SQLAlchemy (async)', 'Alembic', 'Google Cloud Vision', 'OpenCV', 'Render'],
-  repo: 'https://github.com/PrielKrishtal/clarity-scan',
-};
-
 export const skills: { group: string; items: string[] }[] = [
   { group: 'Languages', items: ['Python', 'SQL', 'C', 'Java', 'C#', 'JavaScript'] },
   { group: 'Backend', items: ['FastAPI (async)', 'REST APIs', 'Pydantic', 'SQLAlchemy', 'Alembic'] },

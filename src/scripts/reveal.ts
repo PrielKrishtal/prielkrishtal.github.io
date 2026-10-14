@@ -1,27 +1,30 @@
-const targets = document.querySelectorAll<HTMLElement>('[data-reveal]');
+const pending = new Set(document.querySelectorAll<HTMLElement>('[data-reveal]'));
+const REVEAL_LINE = 0.92;
+let scheduled = false;
 
-function showAll() {
-  targets.forEach((target) => target.classList.add('is-in'));
+function check() {
+  scheduled = false;
+  const line = innerHeight * REVEAL_LINE;
+  const due = [...pending].filter((target) => target.getBoundingClientRect().top < line);
+  for (const target of due) {
+    target.classList.add('is-in');
+    pending.delete(target);
+  }
+  if (pending.size === 0) {
+    removeEventListener('scroll', schedule);
+    removeEventListener('resize', schedule);
+  }
 }
 
-if (!('IntersectionObserver' in window)) {
-  showAll();
-} else {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        entry.target.classList.add('is-in');
-        observer.unobserve(entry.target);
-      }
-    },
-    { rootMargin: '0px 0px -10% 0px', threshold: 0.05 },
-  );
-  targets.forEach((target) => observer.observe(target));
-  window.addEventListener('load', () => setTimeout(() => {
-    targets.forEach((target) => {
-      const box = target.getBoundingClientRect();
-      if (box.top < innerHeight && box.bottom > 0) target.classList.add('is-in');
-    });
-  }, 2500));
+function schedule() {
+  if (scheduled) return;
+  scheduled = true;
+  requestAnimationFrame(check);
+}
+
+if (pending.size > 0) {
+  addEventListener('scroll', schedule, { passive: true });
+  addEventListener('resize', schedule, { passive: true });
+  addEventListener('pageshow', schedule);
+  schedule();
 }

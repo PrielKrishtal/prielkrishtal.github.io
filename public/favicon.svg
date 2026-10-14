@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    .ground { fill: #1b1b1a; }
+    .sheet { fill: #f3f3f0; }
+    .line { fill: #1b1b1a; }
+    .scan { fill: #2340d8; }
+    @media (prefers-color-scheme: dark) {
+      .ground { fill: #ecece8; }
+      .sheet { fill: #161719; }
+      .line { fill: #ecece8; }
+      .scan { fill: #8ea2ff; }
+    }
+  </style>
+  <rect class="ground" width="32" height="32" rx="7" />
+  <rect class="sheet" x="8" y="5" width="16" height="22" rx="1.5" />
+  <rect class="line" x="11" y="9" width="10" height="2" />
+  <rect class="line" x="11" y="13" width="7" height="2" />
+  <rect class="scan" x="8" y="18" width="16" height="2.5" />
+  <rect class="line" x="11" y="22" width="9" height="2" />
+</svg>

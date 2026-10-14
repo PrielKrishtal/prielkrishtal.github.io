@@ -34,3 +34,5 @@ test-results/
 .playwright-mcp/
 .claude/settings.local.json
 .taste-skill/
+
+PLAN.md
