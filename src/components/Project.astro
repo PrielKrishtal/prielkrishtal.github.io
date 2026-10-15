@@ -101,7 +101,7 @@ const hasShots = shots.length > 0 || receipt !== null;
             <h3 class="visually-hidden">Screenshots</h3>
             {receipt && (
               <div class="shot shot-scrub">
-                <ReceiptScrub label={receipt.label} before={receipt.before} after={receipt.after} alt={receipt.alt} />
+                <ReceiptScrub label={receipt.label} before={receipt.before} after={receipt.after} alt={receipt.alt ?? undefined} />
               </div>
             )}
             {shots.map((shot) => (

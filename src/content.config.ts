@@ -67,17 +67,17 @@ const projects = defineCollection({
         .strictObject({
           label: text,
           shape: z.enum(['phone', 'wide', 'portrait']),
-          file: text.optional(),
-          alt: text.optional(),
+          file: text.nullable().optional(),
+          alt: text.nullable().optional(),
         })
         .refine((shot) => !shot.file || shot.alt, { message: 'A screenshot with a file needs alt text', path: ['alt'] }),
     ),
     receipt: z
       .strictObject({
         label: text,
-        before: text.optional(),
-        after: text.optional(),
-        alt: text.optional(),
+        before: text.nullable().optional(),
+        after: text.nullable().optional(),
+        alt: text.nullable().optional(),
       })
       .refine((value) => Boolean(value.before) === Boolean(value.after), { message: 'Give both before and after, or neither' })
       .refine((value) => !value.before || value.alt, { message: 'Receipt images need alt text', path: ['alt'] })

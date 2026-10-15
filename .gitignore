@@ -35,9 +35,7 @@ test-results/
 .claude/settings.local.json
 .taste-skill/
 
-PLAN.md
-
-# local-only: planning, research and internal notes (never published)
+# local only
 /PLAN.md
 /docs/
 .claude/

@@ -8,7 +8,7 @@ const BINARY_IMAGES = new Set(['.png', '.jpg', '.jpeg', '.webp', '.avif']);
 const ALLOWED_EXTENSIONS = new Set([...TEXT_EXTENSIONS, ...BINARY_IMAGES, '.woff2', '.woff', '.ico']);
 
 const FORBIDDEN_TEXT = [
-  { name: 'unfinished TODO marker', pattern: /TODO\(priel\)|VERIFY\(priel\)/i },
+  { name: 'unfinished TODO marker', pattern: /\b(?:TODO|VERIFY)\([A-Za-z0-9_-]*\)/i },
   { name: 'TODO or FIXME note', pattern: /\b(?:TODO|FIXME|XXX)\b[:(]/ },
   { name: 'placeholder text', pattern: /lorem ipsum/i },
   { name: 'GPA or grade point average (never shown on this site)', pattern: /\bGPA\b|grade point average/i },

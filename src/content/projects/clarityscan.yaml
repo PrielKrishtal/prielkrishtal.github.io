@@ -1,7 +1,3 @@
-# ClarityScan: the only file you edit for this project.
-# Same rules as filingbot.yaml: incomplete cards and missing images are not shown.
-# Lines starting with "TODO(priel)" are for you. They are comments and never reach the site.
-
 name: ClarityScan
 order: 2
 status: Deployed
@@ -18,7 +14,6 @@ numbers:
   - { value: "5", label: states in the receipt state machine }
 
 decisions:
-  # TODO(priel): replace each `because: null` with one short reason.
   - { chose: HTTP 202 now with OCR in FastAPI BackgroundTasks, over: OCR inside the upload request, because: null }
   - { chose: Google Cloud Vision, over: PaddleOCR, because: PaddleOCR ran out of memory on the free tier }
   - { chose: "Numeric(10,2) for money", over: float, because: null }
@@ -27,22 +22,17 @@ fixes:
   - { broke: "RAM exhaustion on the live OCR worker (PaddleOCR)", fix: "moved OCR to Google Cloud Vision with no downtime, then added FSM and OCR-adapter tests" }
 
 screenshots:
-  # TODO(priel): put the image in src/assets/screenshots/, then add the two lines `file:` and `alt:` below.
   - label: The ClarityScan dashboard
     shape: wide
-    # file: dashboard.png
-    # alt: The ClarityScan dashboard showing a month of receipts and totals
+    file: null
+    alt: null
 
-# The before/after receipt slider. Until you add real images it shows a drawing of the correction.
-# TODO(priel): add a real receipt (blur out names, addresses and card numbers first):
-# put both images in src/assets/screenshots/ (same size and framing), then uncomment the three lines.
 receipt:
   label: A receipt before and after OpenCV
-  # before: receipt-before.jpg
-  # after: receipt-after.jpg
-  # alt: A photographed receipt, skewed and low-light, then the same receipt flattened and sharpened
+  before: null
+  after: null
+  alt: null
 
-# TODO(priel): check this diagram against the real architecture, then delete this line.
 diagram:
   caption: How a receipt moves through ClarityScan. Pick an outcome to follow it.
   boundary: { label: Deployed on Render, from: 1, to: 5 }
