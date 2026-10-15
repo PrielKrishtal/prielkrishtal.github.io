@@ -11,6 +11,7 @@ const FORBIDDEN_TEXT = [
   { name: 'unfinished TODO marker', pattern: /TODO\(priel\)|VERIFY\(priel\)/i },
   { name: 'TODO or FIXME note', pattern: /\b(?:TODO|FIXME|XXX)\b[:(]/ },
   { name: 'placeholder text', pattern: /lorem ipsum/i },
+  { name: 'GPA or grade point average (never shown on this site)', pattern: /\bGPA\b|grade point average/i },
   { name: 'source map reference', pattern: /sourceMappingURL/ },
   { name: 'local address', pattern: /(?:localhost|127\.0\.0\.1|0\.0\.0\.0)[:/]/ },
 ];
