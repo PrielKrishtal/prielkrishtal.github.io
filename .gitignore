@@ -36,3 +36,14 @@ test-results/
 .taste-skill/
 
 PLAN.md
+
+# local-only: planning, research and internal notes (never published)
+/PLAN.md
+/docs/
+.claude/
+
+# secrets and keys
+*.pem
+*.key
+*.p12
+.env.local

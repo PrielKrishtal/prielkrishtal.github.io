@@ -61,15 +61,27 @@ const projects = defineCollection({
     repo: z.url(),
     numbers: z.array(z.strictObject({ value: text, label: text })).min(3).max(4),
     decisions: z.array(z.strictObject({ chose: text, over: text.nullable(), because: text.nullable() })).min(1).max(3),
-    fixes: z.array(z.strictObject({ broke: text, fix: text.nullable() })).length(1),
+    fixes: z.array(z.strictObject({ broke: text, fix: text.nullable() })).min(1).max(2),
     screenshots: z.array(
-      z.strictObject({
-        label: text,
-        shape: z.enum(['phone', 'wide', 'portrait']),
-        src: text.optional(),
-        alt: text.optional(),
-      }),
+      z
+        .strictObject({
+          label: text,
+          shape: z.enum(['phone', 'wide', 'portrait']),
+          file: text.optional(),
+          alt: text.optional(),
+        })
+        .refine((shot) => !shot.file || shot.alt, { message: 'A screenshot with a file needs alt text', path: ['alt'] }),
     ),
+    receipt: z
+      .strictObject({
+        label: text,
+        before: text.optional(),
+        after: text.optional(),
+        alt: text.optional(),
+      })
+      .refine((value) => Boolean(value.before) === Boolean(value.after), { message: 'Give both before and after, or neither' })
+      .refine((value) => !value.before || value.alt, { message: 'Receipt images need alt text', path: ['alt'] })
+      .optional(),
     diagram,
   }),
 });

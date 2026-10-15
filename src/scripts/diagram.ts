@@ -27,6 +27,7 @@ const RETRY_MS = 800;
 const REST_MS = 1200;
 const MOVE_EASING = 'cubic-bezier(0.77, 0, 0.175, 1)';
 const STATE_LABELS = { up: 'Running now', degraded: 'Degraded', unknown: 'No live reading right now' } as const;
+const SAMPLE_LABEL = 'Example data';
 
 function readPaths(figure: HTMLElement): PathSpec[] {
   return JSON.parse(figure.dataset.paths ?? '[]') as PathSpec[];
@@ -114,12 +115,13 @@ function initLive(figure: HTMLElement) {
   const countEl = figure.querySelector<HTMLElement>('[data-count]')!;
   const sinceWrap = figure.querySelector<HTMLElement>('[data-since-wrap]')!;
   const sinceEl = figure.querySelector<HTMLElement>('[data-since]')!;
-  const sourceEl = figure.querySelector<HTMLElement>('[data-source]')!;
-  const defaultNote = note.textContent?.trim() ?? '';
+  const baseNote = note.textContent?.trim() ?? '';
 
   const configured = import.meta.env.PUBLIC_FILINGBOT_STATUS_URL as string | undefined;
   const statusUrl = configured || '/status.sample.json';
   const source = configured ? 'live' : 'sample';
+  const defaultNote = source === 'sample' ? `${baseNote} The status above is example data.` : baseNote;
+  note.textContent = defaultNote;
 
   let status: FilingBotStatus | null = null;
   let failMode = false;
@@ -256,7 +258,7 @@ function initLive(figure: HTMLElement) {
   });
 
   function renderSince() {
-    const at = status?.lastFilingAt ?? null;
+    const at = status?.source === 'sample' ? null : (status?.lastFilingAt ?? null);
     sinceWrap.hidden = at === null;
     if (at) sinceEl.textContent = formatSince(at);
   }
@@ -264,8 +266,9 @@ function initLive(figure: HTMLElement) {
   function render(next: FilingBotStatus) {
     const previous = status?.filingsProcessed ?? null;
     status = next;
-    stateWrap.dataset.status = next.state;
-    stateLabel.textContent = STATE_LABELS[next.state];
+    const isSample = next.source === 'sample' && next.state !== 'unknown';
+    stateWrap.dataset.status = isSample ? 'sample' : next.state;
+    stateLabel.textContent = isSample ? SAMPLE_LABEL : STATE_LABELS[next.state];
     countWrap.hidden = next.filingsProcessed === null;
     if (next.filingsProcessed !== null) {
       const text = formatCount(next.filingsProcessed);
@@ -278,7 +281,6 @@ function initLive(figure: HTMLElement) {
       countEl.textContent = text;
     }
     renderSince();
-    sourceEl.hidden = next.source !== 'sample';
     if (previous !== null && next.filingsProcessed !== null && next.filingsProcessed > previous) {
       pendingReal = Math.min(3, pendingReal + next.filingsProcessed - previous);
     }

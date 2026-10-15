@@ -1,5 +1,8 @@
 ---
 import { profile } from '../data/profile';
+import { encodeEmail, readableEmail } from '../lib/mail';
+
+const encoded = encodeEmail(profile.email);
 ---
 
 <section id="contact" class="contact" aria-labelledby="contact-title">
@@ -10,8 +13,10 @@ import { profile } from '../data/profile';
     <li>
       <span class="kind">Email</span>
       <span class="value">
-        <a class="link" href={`mailto:${profile.email}`}>{profile.email}</a>
-        <button class="copy" type="button" data-copy={profile.email}>
+        <a class="link" href="#contact" data-email={encoded} data-email-text>
+          {readableEmail(profile.email)}
+        </a>
+        <button class="copy" type="button" data-email-copy={encoded} aria-label="Copy email address">
           <span class="copy-idle">Copy</span>
           <span class="copy-done" aria-hidden="true">Copied</span>
         </button>
@@ -31,12 +36,14 @@ import { profile } from '../data/profile';
 </section>
 
 <script>
-  const button = document.querySelector<HTMLButtonElement>('[data-copy]');
+  import { decode } from '../scripts/mail';
+
+  const button = document.querySelector<HTMLButtonElement>('[data-email-copy]');
   const status = document.querySelector<HTMLElement>('[data-copy-status]');
   let timer = 0;
 
   button?.addEventListener('click', async () => {
-    const value = button.dataset.copy ?? '';
+    const value = decode(button.dataset.emailCopy ?? '');
     try {
       await navigator.clipboard.writeText(value);
     } catch {

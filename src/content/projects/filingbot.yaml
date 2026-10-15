@@ -1,3 +1,12 @@
+# FilingBot: the only file you edit for this project.
+#
+# How the page treats this file:
+# - A decision card shows only when `because` is filled in. `over` is optional.
+# - A reliability card shows only when `fix` is filled in.
+# - A screenshot shows only when its `file` exists in src/assets/screenshots/.
+# - Anything left as null is simply not shown, so the live site never has a gap or a placeholder.
+# Lines starting with "TODO(priel)" are for you. They are comments and never reach the site.
+
 name: FilingBot
 order: 1
 status: Live 24/7
@@ -14,17 +23,25 @@ numbers:
   - { value: "4", label: services monitored by Sentry }
 
 decisions:
+  # TODO(priel): replace each `because: null` with one short reason, and `over` where you know the alternative.
   - { chose: "rules first, then the LLM", over: "the LLM on every filing", because: null }
   - { chose: Redis Streams with consumer groups, over: null, because: null }
   - { chose: GPT-OSS 120B on Groq, over: Llama 3.3 70B (the earlier version), because: null }
 
 fixes:
+  - { broke: "LLM output that doesn't match the schema", fix: "one corrective retry, then the dead-letter queue" }
+  # TODO(priel): replace `fix: null` with what you did about the Groq rate-limit errors.
   - { broke: "Groq rate-limit errors in production, caught by Sentry", fix: null }
 
 screenshots:
-  - { label: A FilingBot alert in Telegram, shape: phone }
+  # TODO(priel): put the image in src/assets/screenshots/, then add the two lines `file:` and `alt:` below.
+  # Crop out anything personal first. alt = one sentence describing what the image shows.
+  - label: A FilingBot alert in Telegram
+    shape: phone
+    # file: telegram-alert.png
+    # alt: A Telegram message from FilingBot about an insider trade
 
-# VERIFY(priel): check against the real architecture
+# TODO(priel): check this diagram against the real architecture, then delete this line.
 diagram:
   live: true
   caption: How a filing moves through FilingBot.

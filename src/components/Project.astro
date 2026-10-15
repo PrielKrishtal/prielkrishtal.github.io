@@ -1,7 +1,9 @@
 ---
 import { getEntry } from 'astro:content';
+import { Picture } from 'astro:assets';
 import Diagram from './case/Diagram.astro';
-import Todo from './case/Todo.astro';
+import ReceiptScrub from './ReceiptScrub.astro';
+import { findScreenshot } from '../lib/images';
 
 interface Props {
   id: 'filingbot' | 'clarityscan';
@@ -12,7 +14,26 @@ const entry = await getEntry('projects', id);
 if (!entry) throw new Error(`Missing project data: ${id}`);
 const data = entry.data;
 const live = data.status === 'Live 24/7';
-const fix = data.fixes[0];
+
+const decisions = data.decisions.filter((decision) => decision.because);
+const fixes = data.fixes.filter((fix) => fix.fix);
+const shots = (
+  await Promise.all(
+    data.screenshots.map(async (shot) => {
+      const image = await findScreenshot(shot.file);
+      return image ? { ...shot, image } : null;
+    }),
+  )
+).filter((shot) => shot !== null);
+const receipt = data.receipt
+  ? {
+      ...data.receipt,
+      before: await findScreenshot(data.receipt.before),
+      after: await findScreenshot(data.receipt.after),
+    }
+  : null;
+const hasCards = decisions.length > 0 || fixes.length > 0;
+const hasShots = shots.length > 0 || receipt !== null;
 ---
 
 <section id={id} class="project section wrap" aria-labelledby={`${id}-title`}>
@@ -41,44 +62,67 @@ const fix = data.fixes[0];
     }
   </dl>
 
-  <div class="details">
-    <div class="cards">
-      <h3 class="visually-hidden">Decisions</h3>
-      <ul>
-        {
-          data.decisions.map((decision, index) => (
-            <li class="card" data-reveal style={`--reveal-step: ${index}`}>
-              Chose <strong>{decision.chose}</strong> over {decision.over ?? <Todo>alternative</Todo>}, because{' '}
-              {decision.because ?? <Todo>reason</Todo>}
-            </li>
-          ))
-        }
-      </ul>
-      <h3 class="visually-hidden">Reliability</h3>
-      <p class="card fix" data-reveal>
-        <span class="broke-line">{fix.broke}</span>
-        <span class="fix-line">{fix.fix ?? <Todo>what fixed it</Todo>}</span>
-      </p>
-    </div>
+  {
+    (hasCards || hasShots) && (
+      <div class:list={['details', { 'is-solo': !(hasCards && hasShots) }]}>
+        {hasCards && (
+          <div class="cards">
+            {decisions.length > 0 && (
+              <>
+                <h3 class="visually-hidden">Decisions</h3>
+                <ul class="decisions">
+                  {decisions.map((decision, index) => (
+                    <li class="card" data-reveal style={`--reveal-step: ${index}`}>
+                      Chose <strong>{decision.chose}</strong>
+                      {decision.over ? ` over ${decision.over}` : ''}, because {decision.because}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {fixes.length > 0 && (
+              <>
+                <h3 class="visually-hidden">Reliability</h3>
+                <ul class="fixes">
+                  {fixes.map((fix, index) => (
+                    <li class="card fix" data-reveal style={`--reveal-step: ${index}`}>
+                      <span class="broke-line">{fix.broke}</span>
+                      <span class="fix-line">{fix.fix}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        )}
 
-    <div class="shots">
-      <h3 class="visually-hidden">Screenshots</h3>
-      {
-        data.screenshots.map((shot) => (
-          <figure class={`shot shot-${shot.shape}`}>
-            <figcaption>{shot.label}</figcaption>
-            {shot.src ? (
-              <img src={shot.src} alt={shot.alt ?? shot.label} loading="lazy" decoding="async" />
-            ) : (
-              <div class="frame">
-                <Todo>screenshot</Todo>
+        {hasShots && (
+          <div class="shots">
+            <h3 class="visually-hidden">Screenshots</h3>
+            {receipt && (
+              <div class="shot shot-scrub">
+                <ReceiptScrub label={receipt.label} before={receipt.before} after={receipt.after} alt={receipt.alt} />
               </div>
             )}
-          </figure>
-        ))
-      }
-    </div>
-  </div>
+            {shots.map((shot) => (
+              <figure class={`shot shot-${shot.shape}`}>
+                <figcaption>{shot.label}</figcaption>
+                <Picture
+                  src={shot.image}
+                  alt={shot.alt ?? ''}
+                  formats={['avif', 'webp']}
+                  widths={[240, 480, 960]}
+                  sizes="(min-width: 900px) 40vw, 92vw"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </figure>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
 </section>
 
 <style>
@@ -169,6 +213,10 @@ const fix = data.fixes[0];
     margin-top: 36px;
   }
 
+  .details.is-solo {
+    max-width: 720px;
+  }
+
   ul {
     display: grid;
     gap: 10px;
@@ -187,10 +235,14 @@ const fix = data.fixes[0];
     font-weight: 600;
   }
 
+  .cards {
+    display: grid;
+    gap: 10px;
+  }
+
   .fix {
     display: grid;
     gap: 4px;
-    margin-top: 10px;
   }
 
   .fix span {
@@ -226,45 +278,30 @@ const fix = data.fixes[0];
     margin: 0;
   }
 
+  .shot-scrub {
+    flex: 1 1 100%;
+  }
+
   .shot-phone {
-    flex: 0 1 120px;
+    flex: 0 1 160px;
   }
 
   .shot-portrait {
-    flex: 1 1 120px;
-    max-width: 170px;
+    flex: 1 1 140px;
+    max-width: 220px;
   }
 
   .shot-wide {
     flex: 1 1 100%;
+    max-width: 720px;
   }
 
-  .frame,
-  .shot img {
-    display: grid;
-    place-items: center;
+  .shot :global(picture),
+  .shot :global(img) {
+    display: block;
     width: 100%;
-    padding: 10px;
-    background: var(--sheet);
+    height: auto;
     border-radius: 8px;
-    text-align: center;
-    font-size: var(--text-small);
-  }
-
-  .shot-phone .frame,
-  .shot-phone img {
-    aspect-ratio: 9 / 19.5;
-    border-radius: 20px;
-  }
-
-  .shot-portrait .frame,
-  .shot-portrait img {
-    aspect-ratio: 3 / 4;
-  }
-
-  .shot-wide .frame,
-  .shot-wide img {
-    aspect-ratio: 2 / 1;
   }
 
   .shot figcaption {
@@ -298,7 +335,8 @@ const fix = data.fixes[0];
       gap: 18px;
     }
 
-    li.card:nth-child(n + 2) {
+    .decisions .card:nth-child(n + 2),
+    .fixes .card:nth-child(n + 2) {
       display: none;
     }
 
@@ -320,7 +358,7 @@ const fix = data.fixes[0];
     }
 
     .shot-phone {
-      flex-basis: 100px;
+      flex-basis: 130px;
     }
   }
 
@@ -338,7 +376,7 @@ const fix = data.fixes[0];
     }
 
     .shot-phone {
-      flex-basis: 190px;
+      flex-basis: 200px;
     }
   }
 </style>

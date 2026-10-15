@@ -54,7 +54,7 @@ const placed: Placed[] = columns.flatMap((column, index) => {
 const boundaryStyle = `--dc:${boundary.from + 1} / ${boundary.to + 2};--dr:2 / 5;--mc:1 / 3;--mr:${boundary.from + 1} / ${boundaryEndRow}`;
 const footerStyle = `--dc:${boundary.from + 1} / ${boundary.to + 2};--dr:4;--mc:${footerBesideFreeRows ? '2' : '1 / 3'};--mr:${footerMobileRow}`;
 const pathData = JSON.stringify(paths.map(({ id, note, steps }) => ({ id, note, steps })));
-const liveNote = 'The moving filing shows how one filing travels. Status and count come from the status feed.';
+const liveNote = 'The moving filing shows how one filing travels.';
 ---
 
 <figure class="dg" data-diagram data-mode={live ? 'live' : 'paths'} data-paths={pathData} style={`--cols:${count}`}>
@@ -70,9 +70,6 @@ const liveNote = 'The moving filing shows how one filing travels. Status and cou
         </p>
         <p data-since-wrap hidden>
           Last filing <span data-since />
-        </p>
-        <p class="source" data-source hidden>
-          Sample data until the live feed is connected
         </p>
       </div>
     ) : (
@@ -217,6 +214,10 @@ const liveNote = 'The moving filing shows how one filing travels. Status and cou
     background: var(--ok);
   }
 
+  [data-status='sample'] .dot {
+    background: var(--ink-2);
+  }
+
   [data-status='degraded'] .dot {
     background: var(--fail);
   }
@@ -227,10 +228,6 @@ const liveNote = 'The moving filing shows how one filing travels. Status and cou
     color: var(--ink);
     font-size: var(--text-lead);
     font-weight: 600;
-  }
-
-  .source {
-    font-size: var(--text-small);
   }
 
   .packet {

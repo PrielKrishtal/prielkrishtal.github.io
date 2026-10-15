@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Page not found, Priel Krishtal" description="This page does not exist." index={false}>
+  <section class="missing wrap">
+    <h1>Page not found</h1>
+    <p>There is only one page on this site.</p>
+    <p><a class="button" href="/">Back to the home page</a></p>
+  </section>
+</BaseLayout>
+
+<style>
+  .missing {
+    padding-block: clamp(64px, 12vw, 160px);
+  }
+
+  h1 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: var(--text-display);
+    line-height: var(--text-display--line-height);
+    letter-spacing: -0.025em;
+  }
+
+  p {
+    margin-top: 20px;
+    font-size: var(--text-lead);
+  }
+</style>
