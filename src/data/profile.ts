@@ -1,7 +1,7 @@
 export const profile = {
   name: 'Priel Krishtal',
   location: 'Israel',
-  email: '[email removed]',
+  emailEncoded: 'bW9jLmxpYW1nQGxhdGhzaXJrLmxlaXJw',
   github: { url: 'https://github.com/PrielKrishtal', label: 'github.com/PrielKrishtal' },
   linkedin: { url: 'https://www.linkedin.com/in/prielkrishtal', label: 'linkedin.com/in/prielkrishtal' },
   headline: 'CS student building production backend and LLM systems.',

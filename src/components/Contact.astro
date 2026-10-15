@@ -1,8 +1,8 @@
 ---
 import { profile } from '../data/profile';
-import { encodeEmail, readableEmail } from '../lib/mail';
+import { readableEmail } from '../lib/mail';
 
-const encoded = encodeEmail(profile.email);
+const encoded = profile.emailEncoded;
 ---
 
 <section id="contact" class="contact" aria-labelledby="contact-title">
@@ -14,7 +14,7 @@ const encoded = encodeEmail(profile.email);
       <span class="kind">Email</span>
       <span class="value">
         <a class="link" href="#contact" data-email={encoded} data-email-text>
-          {readableEmail(profile.email)}
+          {readableEmail(encoded)}
         </a>
         <button class="copy" type="button" data-email-copy={encoded} aria-label="Copy email address">
           <span class="copy-idle">Copy</span>

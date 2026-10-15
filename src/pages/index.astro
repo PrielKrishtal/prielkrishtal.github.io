@@ -6,7 +6,6 @@ import Skills from '../components/Skills.astro';
 import About from '../components/About.astro';
 import Contact from '../components/Contact.astro';
 import { profile } from '../data/profile';
-import { encodeEmail } from '../lib/mail';
 ---
 
 <BaseLayout title="Priel Krishtal, backend and LLM systems" description={`${profile.headline} ${profile.seeking}`}>
@@ -18,7 +17,7 @@ import { encodeEmail } from '../lib/mail';
         <span>{profile.seeking}</span>
       </p>
       <div class="actions">
-        <a class="button" href="#contact" data-email={encodeEmail(profile.email)}>Get in touch</a>
+        <a class="button" href="#contact" data-email={profile.emailEncoded}>Get in touch</a>
         <ul class="contact-links">
           <li><a class="link" href={profile.linkedin.url}>LinkedIn</a></li>
           <li><a class="link" href={profile.github.url}>GitHub</a></li>
